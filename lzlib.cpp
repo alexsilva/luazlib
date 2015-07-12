@@ -12,8 +12,7 @@
 #define CHUNK 16384
 
 /* report a zlib or i/o error */
-void zerr(int ret)
-{
+void zerr(int ret) {
     fputs("zpipe: ", stderr);
     switch (ret) {
         case Z_ERRNO:
@@ -37,8 +36,74 @@ void zerr(int ret)
     }
 }
 
+int _compress(char *data, std::vector<unsigned char> &buff, int level) {
+    int ret, flush;
+    unsigned have;
+    z_stream strm;
+    unsigned char in[CHUNK];
+    unsigned char out[CHUNK];
+
+    /* allocate deflate state */
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+
+    ret = deflateInit(&strm, level);
+    if (ret != Z_OK)
+        return ret;
+
+    /* compress until end of file */
+    size_t remain = CHUNK;
+    uInt chunk_size = 0;
+    int data_size  = strlen(data);
+
+    do {
+        chunk_size = remain > data_size ? (size_t) data_size : remain;
+        memcpy(in, data, chunk_size);
+        strm.avail_in = chunk_size;
+        data += chunk_size;
+
+        flush = data[0] == '\0' ? Z_FINISH : Z_NO_FLUSH;
+
+        data_size -= chunk_size;
+        strm.next_in = in;
+
+        /* run deflate() on input until output buffer not full, finish
+           compression if all of source has been read in */
+        do {
+            strm.avail_out = CHUNK;
+            strm.next_out = out;
+
+            ret = deflate(&strm, flush);    /* no bad return value */
+            assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
+            have = CHUNK - strm.avail_out;
+
+            if (have > 0) {
+                buff.insert(buff.end(), out, out + have);
+            }
+        } while (strm.avail_out == 0);
+        assert(strm.avail_in == 0);     /* all input will be used */
+
+    /* done when last data in file processed */
+    } while (flush != Z_FINISH);
+    assert(ret == Z_STREAM_END);        /* stream will be complete */
+
+    /* clean up and return */
+    (void)deflateEnd(&strm);
+    return Z_OK;
+}
 
 void static compress(void) {
+    char *data = luaL_check_string(1);
+    if (!data[strlen(data)] == '\0') {
+        lua_error((char *) "compress(eof): invalid string!");
+    }
+    lua_Object level_Object = lua_getparam(1);
+    int level = lua_isnumber(level_Object) ? (int) lua_getnumber(level_Object) : Z_DEFAULT_COMPRESSION;
+    std::vector<unsigned char> buff;
+
+    _compress(data, buff, level);
+    lua_pushlstring((char *) buff.data(), (long) buff.size());
 
 }
 
