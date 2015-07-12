@@ -96,7 +96,7 @@ int _compress(char *data, std::vector<unsigned char> &buff, int level) {
 void static compress(void) {
     char *data = luaL_check_string(1);
     if (!data[strlen(data)] == '\0') {
-        lua_error((char *) "compress(eof): invalid string!");
+        lua_error((char *) "compress(zlib|eof): invalid string!");
     }
     lua_Object level_Object = lua_getparam(2);
     int level = lua_isnumber(level_Object) ? (int) lua_getnumber(level_Object) : Z_DEFAULT_COMPRESSION;
@@ -178,9 +178,8 @@ static int _decompress(char *data, int data_size, std::vector<unsigned char> &bu
 void static decompress(void) {
     std::vector<unsigned char> buff;
     lua_Object obj = lua_getparam(1);
-
     if (!lua_isstring(obj)) {
-        lua_error((char *) "decompress: string required!");
+        lua_error((char *) "decompress(zlib): string required!");
     }
     int data_size = lua_strlen(obj);
     char *data = lua_getstring(obj);
