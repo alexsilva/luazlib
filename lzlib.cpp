@@ -98,7 +98,7 @@ void static compress(void) {
     if (!data[strlen(data)] == '\0') {
         lua_error((char *) "compress(eof): invalid string!");
     }
-    lua_Object level_Object = lua_getparam(1);
+    lua_Object level_Object = lua_getparam(2);
     int level = lua_isnumber(level_Object) ? (int) lua_getnumber(level_Object) : Z_DEFAULT_COMPRESSION;
     std::vector<unsigned char> buff;
 
@@ -200,4 +200,17 @@ static struct luaL_reg lzlib[] = {
 LUA_LIBRARY void lua_lzlibopen(lua_State *L) {
     lua_state = L;
     luaL_openlib(lzlib, (sizeof(lzlib) / sizeof(lzlib[0])));
+    // global variables to configure using as parameter the
+    // decompression function.
+    lua_pushnumber(Z_NO_COMPRESSION);
+    lua_setglobal((char *) "Z_NO_COMPRESSION");
+
+    lua_pushnumber(Z_BEST_SPEED);
+    lua_setglobal((char *) "Z_BEST_SPEED");
+
+    lua_pushnumber(Z_BEST_COMPRESSION);
+    lua_setglobal((char *) "Z_BEST_COMPRESSION");
+
+    lua_pushnumber(Z_DEFAULT_COMPRESSION);
+    lua_setglobal((char *) "Z_DEFAULT_COMPRESSION");
 }
