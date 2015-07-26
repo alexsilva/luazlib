@@ -8,6 +8,10 @@ include_directories(
     ${ZLIB_DIR}
 )
 
+link_directories(
+    ${ZLIB_DIR}/Release
+)
+
 set(SOURCE_FILES lzlib.cpp lzlib.h)
 
 add_library(lzlib SHARED ${SOURCE_FILES})
