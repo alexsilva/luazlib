@@ -5,7 +5,13 @@
 #ifndef LUAZLIB_LZLIB_H
 #define LUAZLIB_LZLIB_H
 
-#define LUA_LIBRARY __declspec(dllexport)
+#if defined(_MSC_VER)
+    //  Microsoft
+    #define LUA_LIBRARY __declspec(dllexport)
+#else
+    //  GCC
+    #define LUA_LIBRARY __attribute__((visibility("default")))
+#endif
 
 extern "C" {
     #include "lua.h"
