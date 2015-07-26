@@ -93,17 +93,17 @@ int _compress(char *data, std::vector<unsigned char> &buff, int level) {
     return Z_OK;
 }
 
-void static compress(void) {
-    char *data = luaL_check_string(1);
+void static compress(lua_State *L) {
+    char *data = luaL_check_string(L, 1);
     if (!data[strlen(data)] == '\0') {
-        lua_error((char *) "compress(zlib|eof): invalid string!");
+        lua_error(L, (char *) "compress(zlib|eof): invalid string!");
     }
-    lua_Object level_Object = lua_getparam(2);
-    int level = lua_isnumber(level_Object) ? (int) lua_getnumber(level_Object) : Z_DEFAULT_COMPRESSION;
+    lua_Object level_Object = lua_getparam(L, 2);
+    int level = lua_isnumber(L, level_Object) ? (int) lua_getnumber(L, level_Object) : Z_DEFAULT_COMPRESSION;
     std::vector<unsigned char> buff;
 
     _compress(data, buff, level);
-    lua_pushlstring((char *) buff.data(), (long) buff.size());
+    lua_pushlstring(L, (char *) buff.data(), (long) buff.size());
 
 }
 
@@ -175,19 +175,19 @@ static int _decompress(char *data, int data_size, std::vector<unsigned char> &bu
     return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
-void static decompress(void) {
+void static decompress(lua_State *L) {
     std::vector<unsigned char> buff;
-    lua_Object obj = lua_getparam(1);
-    if (!lua_isstring(obj)) {
-        lua_error((char *) "decompress(zlib): string required!");
+    lua_Object obj = lua_getparam(L, 1);
+    if (!lua_isstring(L, obj)) {
+        lua_error(L, (char *) "decompress(zlib): string required!");
     }
-    int data_size = lua_strlen(obj);
-    char *data = lua_getstring(obj);
+    int data_size = lua_strlen(L, obj);
+    char *data = lua_getstring(L, obj);
 
     int ret = _decompress(data, data_size, buff);
     if (ret != Z_OK) zerr(ret);
 
-    lua_pushstring((char *) buff.data());
+    lua_pushstring(L, (char *) buff.data());
 }
 
 static struct luaL_reg lzlib[] = {
@@ -197,19 +197,18 @@ static struct luaL_reg lzlib[] = {
 
 
 LUA_LIBRARY void lua_lzlibopen(lua_State *L) {
-    lua_state = L;
-    luaL_openlib(lzlib, (sizeof(lzlib) / sizeof(lzlib[0])));
+    luaL_openlib(L, lzlib, (sizeof(lzlib) / sizeof(lzlib[0])));
     // global variables to configure using as parameter the
     // decompression function.
-    lua_pushnumber(Z_NO_COMPRESSION);
-    lua_setglobal((char *) "Z_NO_COMPRESSION");
+    lua_pushnumber(L, Z_NO_COMPRESSION);
+    lua_setglobal(L, (char *) "Z_NO_COMPRESSION");
 
-    lua_pushnumber(Z_BEST_SPEED);
-    lua_setglobal((char *) "Z_BEST_SPEED");
+    lua_pushnumber(L, Z_BEST_SPEED);
+    lua_setglobal(L, (char *) "Z_BEST_SPEED");
 
-    lua_pushnumber(Z_BEST_COMPRESSION);
-    lua_setglobal((char *) "Z_BEST_COMPRESSION");
+    lua_pushnumber(L, Z_BEST_COMPRESSION);
+    lua_setglobal(L, (char *) "Z_BEST_COMPRESSION");
 
-    lua_pushnumber(Z_DEFAULT_COMPRESSION);
-    lua_setglobal((char *) "Z_DEFAULT_COMPRESSION");
+    lua_pushnumber(L, Z_DEFAULT_COMPRESSION);
+    lua_setglobal(L, (char *) "Z_DEFAULT_COMPRESSION");
 }
