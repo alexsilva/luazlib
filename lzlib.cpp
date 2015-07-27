@@ -168,8 +168,6 @@ static int _decompress(char *data, int data_size, std::vector<unsigned char> &bu
         /* done when inflate() says it's done */
     } while (ret != Z_STREAM_END);
 
-    buff.push_back('\0'); // end of stream
-
     /* clean up and return */
     (void)inflateEnd(&strm);
     return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
@@ -187,7 +185,7 @@ void static decompress(lua_State *L) {
     int ret = _decompress(data, data_size, buff);
     if (ret != Z_OK) zerr(ret);
 
-    lua_pushstring(L, (char *) buff.data());
+    lua_pushlstring(L, (char *) buff.data(), (long) buff.size());
 }
 
 static struct luaL_reg lzlib[] = {
