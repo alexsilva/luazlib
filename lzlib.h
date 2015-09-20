@@ -5,6 +5,8 @@
 #ifndef LUAZLIB_LZLIB_H
 #define LUAZLIB_LZLIB_H
 
+#include <string>
+
 #if defined(_MSC_VER)
     //  Microsoft
     #define LUA_LIBRARY __declspec(dllexport)
@@ -12,6 +14,12 @@
     //  GCC
     #define LUA_LIBRARY __attribute__((visibility("default")))
 #endif
+
+class zlib_state {
+public:
+    int code;
+    std::string msg;
+};
 
 extern "C" {
     #include "lua.h"

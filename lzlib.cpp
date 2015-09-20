@@ -12,28 +12,32 @@
 #define CHUNK 16384
 
 /* report a zlib or i/o error */
-void zerr(int ret) {
-    fputs("zpipe: ", stderr);
+zlib_state zlib_set_state(int ret) {
+    zlib_state zlib_st;
+    zlib_st.code = ret;
     switch (ret) {
         case Z_ERRNO:
             if (ferror(stdin))
-                fputs("error reading stdin\n", stderr);
+                zlib_st.msg = "error reading stdin";
             if (ferror(stdout))
-                fputs("error writing stdout\n", stderr);
+                zlib_st.msg = "error writing stdout";
             break;
         case Z_STREAM_ERROR:
-            fputs("invalid compression level\n", stderr);
+            zlib_st.msg = "invalid compression level";
             break;
         case Z_DATA_ERROR:
-            fputs("invalid or incomplete deflate data\n", stderr);
+            zlib_st.msg = "invalid or incomplete deflate data";
             break;
         case Z_MEM_ERROR:
-            fputs("out of memory\n", stderr);
+            zlib_st.msg = "out of memory";
             break;
         case Z_VERSION_ERROR:
-            fputs("zlib version mismatch!\n", stderr);
-        default:break;
+            zlib_st.msg = "zlib version mismatch!";
+            break;
+        default:
+            zlib_st.msg = "ok";
     }
+    return zlib_st;
 }
 
 int _compress(char *data, std::vector<unsigned char> &buff, int level) {
@@ -102,9 +106,16 @@ void static compress(lua_State *L) {
     int level = lua_isnumber(L, level_Object) ? (int) lua_getnumber(L, level_Object) : Z_DEFAULT_COMPRESSION;
     std::vector<unsigned char> buff;
 
-    _compress(data, buff, level);
-    lua_pushlstring(L, (char *) buff.data(), (long) buff.size());
+    int ret = _compress(data, buff, level);
+    zlib_state zlib_st = zlib_set_state(ret);
 
+    if (zlib_st.code == Z_OK) {
+        lua_pushnumber(L,  zlib_st.code);  // everything ok
+        lua_pushlstring(L, (char *) buff.data(), (long) buff.size());
+    } else {
+        lua_pushnumber(L,  zlib_st.code);  // error
+        lua_pushstring(L, (char *) zlib_st.msg.c_str());
+    }
 }
 
 /* Decompress data */
@@ -183,9 +194,15 @@ void static decompress(lua_State *L) {
     char *data = lua_getstring(L, obj);
 
     int ret = _decompress(data, data_size, buff);
-    if (ret != Z_OK) zerr(ret);
+    zlib_state zlib_st = zlib_set_state(ret);
 
-    lua_pushlstring(L, (char *) buff.data(), (long) buff.size());
+    if (zlib_st.code == Z_OK) {
+        lua_pushnumber(L,  zlib_st.code);  // everything ok
+        lua_pushlstring(L, (char *) buff.data(), (long) buff.size());
+    } else {
+        lua_pushnumber(L,  zlib_st.code);  // error
+        lua_pushstring(L, (char *) zlib_st.msg.c_str());
+    }
 }
 
 static struct luaL_reg lzlib[] = {
