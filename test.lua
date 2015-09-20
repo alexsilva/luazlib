@@ -21,7 +21,7 @@ while i < 10000 do
 end
 local original_text_size = strlen(text)
 
-local code, data = zlib_compress(text)
+local code, data = zlib_compress(text, zlib.Z_BEST_COMPRESSION)
 
 assert(code == 0, 'zlib_compress: invalid state code!')
 
@@ -36,10 +36,23 @@ local text_size_decompressed = strlen(data)
 assert(data == text, '[equal] decompress error!')
 assert(original_text_size == text_size_decompressed, '[text-size] decompressed error!')
 
-print(data)
+print("Compress flags")
+print("==============")
+print("zlib.Z_NO_COMPRESSION:", zlib.Z_NO_COMPRESSION)
+print("zlib.Z_BEST_COMPRESSION:", zlib.Z_BEST_COMPRESSION)
+print("zlib.Z_DEFAULT_COMPRESSION:", zlib.Z_DEFAULT_COMPRESSION)
+print("zlib.Z_BEST_SPEED:", zlib.Z_BEST_SPEED)
+print("\n")
+
+print("Results check")
+print("==============")
 print(
     tostring(original_text_size)..'b -',
     tostring(text_size_compressed)..'b =',
     tostring(original_text_size - text_size_compressed)..'b >>>',
     tostring(100.0 / original_text_size * text_size_compressed)..'%'
 )
+
+local code, data = zlib_compress("12345", zlib.Z_BEST_COMPRESSION + 100)
+assert(code ~= 0)
+print(code, data)
