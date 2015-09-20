@@ -21,10 +21,16 @@ while i < 10000 do
 end
 local original_text_size = strlen(text)
 
-local data = zlib_compress(text)
+local code, data = zlib_compress(text)
+
+assert(code == 0, 'zlib_compress: invalid state code!')
+
 local text_size_compressed = strlen(data)
 
-local data = zlib_decompress(data)
+local code, data = zlib_decompress(data)
+
+assert(code == 0, 'zlib_decompress: invalid state code!')
+
 local text_size_decompressed = strlen(data)
 
 assert(data == text, '[equal] decompress error!')
