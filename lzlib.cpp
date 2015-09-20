@@ -211,19 +211,25 @@ static struct luaL_reg lzlib[] = {
 };
 
 
+#define set_table(L, obj, name, value) \
+    lua_pushobject(L, obj); \
+    lua_pushstring(L, name); \
+    lua_pushnumber(L, value); \
+    lua_settable(L);
+
+
 LUA_LIBRARY void lua_lzlibopen(lua_State *L) {
     luaL_openlib(L, lzlib, (sizeof(lzlib) / sizeof(lzlib[0])));
-    // global variables to configure using as parameter the
-    // decompression function.
-    lua_pushnumber(L, Z_NO_COMPRESSION);
-    lua_setglobal(L, (char *) "Z_NO_COMPRESSION");
 
-    lua_pushnumber(L, Z_BEST_SPEED);
-    lua_setglobal(L, (char *) "Z_BEST_SPEED");
+    // global variables to configure using as parameter the decompression function.
+    lua_Object lzlib = lua_createtable(L);
 
-    lua_pushnumber(L, Z_BEST_COMPRESSION);
-    lua_setglobal(L, (char *) "Z_BEST_COMPRESSION");
+    lua_pushobject(L, lzlib);
+    lua_setglobal(L, (char *) "zlib");
 
-    lua_pushnumber(L, Z_DEFAULT_COMPRESSION);
-    lua_setglobal(L, (char *) "Z_DEFAULT_COMPRESSION");
+    // zlib compression flags
+    set_table(L, lzlib, (char *) "Z_NO_COMPRESSION", Z_NO_COMPRESSION);
+    set_table(L, lzlib, (char *) "Z_BEST_COMPRESSION", Z_BEST_COMPRESSION);
+    set_table(L, lzlib, (char *) "Z_DEFAULT_COMPRESSION", Z_DEFAULT_COMPRESSION);
+    set_table(L, lzlib, (char *) "Z_BEST_SPEED", Z_BEST_SPEED);
 }
